@@ -13,6 +13,7 @@ void do_clr();
 void do_dir(char *dir);
 void do_os(char **args);
 void do_env();
+void do_cd(char **args, char *buf);
 
 extern char **environ;
 
@@ -40,6 +41,9 @@ int main(int argc, char **argv) {
                 } else if (!strcmp(args[0],"environ")){
                     // Get system environment variables
                     do_env();
+                } else if (!strcmp(args[0],"cd")){
+                    // Get system environment variables
+                    do_cd(args, buf);
                 } else if (!strcmp(args[0],"quit")) {
                     // quit
                     exit(0);
@@ -81,5 +85,31 @@ void do_env() {
     while (*environ2){
         fputs(*environ2++, stdout);
         fputs("\n", stdout);
+    }
+}
+
+void do_cd(char **args, char *buf) {
+    char *dir = args[1];
+    if (args[1] == NULL) {
+        // PWD
+        char *currdir = getcwd(buf, MAX_BUFFER);
+        fputs(currdir, stdout);
+        fputs("\n", stdout);
+    } else {
+        printf("%s\n", dir);
+        int result;
+        result = chdir(dir);
+        if (result == 0) {
+            char *currdir = getcwd(buf, MAX_BUFFER);
+            char *oldpwd = calloc(strlen(currdir) + 5, sizeof(char));
+            strcat(oldpwd, "PWD=");
+            strcat(oldpwd, currdir);
+            int ret;
+            ret = putenv(oldpwd);
+        } else {
+            fputs("[ERROR] Cannot cd to ", stdout);
+            fputs(dir, stdout);
+            fputs("\n", stdout);
+        }
     }
 }
