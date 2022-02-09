@@ -96,7 +96,6 @@ void do_cd(char **args, char *buf) {
         fputs(currdir, stdout);
         fputs("\n", stdout);
     } else {
-        printf("%s\n", dir);
         int result;
         result = chdir(dir);
         if (result == 0) {
