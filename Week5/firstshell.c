@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 #include <sys/types.h>
 
 #define MAX_BUFFER 1024                        // max line buffer
@@ -18,40 +19,65 @@ void do_cd(char **args, char *buf);
 extern char **environ;
 
 int main(int argc, char **argv) {
+
+    pid_t parent_pid;
+    parent_pid = getpid();
     char buf[MAX_BUFFER];                      // line buffer
     char * args[MAX_ARGS];                     // pointers to arg strings
     char ** arg;                            // working pointer thru args
     char * prompt = "$ " ;                    // shell prompt
+    printf("Parent ID: %d\n", (int)parent_pid);
+    fputs(prompt, stdout);
 
     while (1) {
-        fputs(prompt, stdout);
 
         if (fgets(buf, MAX_BUFFER, stdin)) {
             arg = args;
             *arg++ = strtok(buf,SEPARATORS);   // tokenise input
             while ((*arg++ = strtok(NULL,SEPARATORS)));
+            
+            
+            if (args[0] && !strcmp(args[0],"quit")) {
+                // quit command is in parent (outside fork) because cant exit from child process 
+                exit(0);
+            }
 
-            if (args[0]) {
-                if (!strcmp(args[0],"clr")) {
-                    // clear command
-                    do_clr();
-                } else if (!strcmp(args[0],"dir") && args[1] != NULL) {
-                    // dir command
-                    do_dir(args[1]);
-                } else if (!strcmp(args[0],"environ")){
-                    // Get system environment variables
-                    do_env();
-                } else if (!strcmp(args[0],"cd")){
-                    // Get system environment variables
-                    do_cd(args, buf);
-                } else if (!strcmp(args[0],"quit")) {
-                    // quit
-                    exit(0);
+            pid_t child_pid;
+            int status;
+
+            if (fork() != 0) {
+                wait(&status); // Waits for child process to finish
+                fputs(prompt, stdout);
+            } else {
+                child_pid = getpid();  // get child pid
+                printf("%d\n", child_pid);
+                if (args[0]) {
+                    if (!strcmp(args[0],"clr")) {
+                        // clear command
+                        do_clr();
+                    } else if (!strcmp(args[0],"dir") && args[1] != NULL) {
+                        // dir command
+                        do_dir(args[1]);
+                    } else if (!strcmp(args[0],"environ")){
+                        // Get system environment variables
+                        do_env();
+                    } else if (!strcmp(args[0],"cd")){
+                        // Get system environment variables
+                        do_cd(args, buf);
+                    } else {
+                        // Pass anyxx other command to the os shell
+                        do_os(args);
+                    }
                 } else {
-                    // Pass any other command to the os shell
-                    do_os(args);
+                    // Exits child process if no command given
+                    exit(0);
                 }
             }
+
+            // pid_t pid = getpid();        // reget our pid
+            // printf("Process ID in parent after fork: %d\n", pid);
+
+            
         }
     }
 
@@ -59,7 +85,9 @@ int main(int argc, char **argv) {
 }
 
 void do_clr() {
-    system("clear");
+    // execv("clear", "clear");
+    execlp("clear", "clear",NULL);
+    exit(0);
 }
 
 void do_dir(char *dir) {
@@ -68,6 +96,7 @@ void do_dir(char *dir) {
     strcat(cmd, dir);
     system(cmd);
     free(cmd);
+    exit(0);
 }
 
 void do_os(char **args) {
@@ -78,6 +107,7 @@ void do_os(char **args) {
     }
     system(cmd);
     free(cmd);
+    exit(0);
 }
 
 void do_env() {
@@ -86,6 +116,7 @@ void do_env() {
         fputs(*environ2++, stdout);
         fputs("\n", stdout);
     }
+    exit(0);
 }
 
 void do_cd(char **args, char *buf) {
@@ -111,4 +142,5 @@ void do_cd(char **args, char *buf) {
             fputs("\n", stdout);
         }
     }
+    exit(0);
 }
