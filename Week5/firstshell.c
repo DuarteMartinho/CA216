@@ -22,12 +22,13 @@ int main(int argc, char **argv) {
 
     pid_t parent_pid;
     parent_pid = getpid();
+
     char buf[MAX_BUFFER];                      // line buffer
     char * args[MAX_ARGS];                     // pointers to arg strings
-    char ** arg;                            // working pointer thru args
-    char * prompt = "$ " ;                    // shell prompt
-    printf("Parent ID: %d\n", (int)parent_pid);
-    fputs(prompt, stdout);
+    char ** arg;                               // working pointer thru args
+    
+    char * prompt = "$ " ;                     // shell prompt
+    fputs(prompt, stdout);                     // print prompt
 
     while (1) {
 
@@ -36,21 +37,19 @@ int main(int argc, char **argv) {
             *arg++ = strtok(buf,SEPARATORS);   // tokenise input
             while ((*arg++ = strtok(NULL,SEPARATORS)));
             
-            
             if (args[0] && !strcmp(args[0],"quit")) {
                 // quit command is in parent (outside fork) because cant exit from child process 
                 exit(0);
             }
 
-            pid_t child_pid;
-            int status;
+            pid_t child_pid;               // Defines child id
+            int status;                    // Defines status
 
             if (fork() != 0) {
                 wait(&status); // Waits for child process to finish
                 fputs(prompt, stdout);
             } else {
                 child_pid = getpid();  // get child pid
-                printf("%d\n", child_pid);
                 if (args[0]) {
                     if (!strcmp(args[0],"clr")) {
                         // clear command
@@ -73,11 +72,6 @@ int main(int argc, char **argv) {
                     exit(0);
                 }
             }
-
-            // pid_t pid = getpid();        // reget our pid
-            // printf("Process ID in parent after fork: %d\n", pid);
-
-            
         }
     }
 
