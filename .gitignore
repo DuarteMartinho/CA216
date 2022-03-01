@@ -35,3 +35,4 @@ relative/path/to/dir/anotherfile
 
 # Ignore mac files
 .DS_Store
+*/*.DS_Store
